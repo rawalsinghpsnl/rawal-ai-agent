@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+frontend/dist/
+frontend/.vite/
+*.tsbuildinfo
+
+# Env / secrets — NEVER commit real secrets. See docs/security.md
+.env
+.env.local
+.env.*.local
+backend/.env
+backend/.env.*
+!backend/.env.example
+*.pem
+*.key
+
+# Data / local state (includes legacy bhati.db + canonical rawal.db)
+data/
+*.db
+*.sqlite3
+*.sqlite3-journal
+backend/data/
+backend/*.db
+
+# Node / build
+frontend/dist/
+cli/*.tgz
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+*.log
+.vercel
+.render

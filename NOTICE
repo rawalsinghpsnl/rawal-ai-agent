@@ -1,0 +1,30 @@
+# NOTICE — rawal-ai-agent
+
+Copyright (c) 2026 rawal-ai-agent contributors.
+Distributed under the MIT License (see LICENSE).
+
+## Original work
+
+`rawal-ai-agent` is the canonical name of this project. The codebase, brand,
+documentation and installer (`rawal-ai-agent` on npm) originate from this
+repository. When redistributing or forking:
+
+1. Keep this NOTICE file and the LICENSE file intact.
+2. Keep `SPDX-License-Identifier: MIT` headers where present.
+3. Do not remove or obscure `rawal-ai-agent` attribution in the UI footer,
+   CLI `--help`, API `/capabilities`, or installer banners.
+4. If you fork, rename your distribution clearly (e.g. `my-fork (based on
+   rawal-ai-agent)`) instead of claiming to be the upstream project.
+
+## No warranty / no scraping of secrets
+
+This is self-hosted software. Operators are responsible for their own API keys,
+passwords and deployment secrets. Never commit `backend/.env`, `.env`, tokens,
+or database credentials. See `docs/security.md` and `SECURITY.md`.
+
+## Trademark note
+
+`rawal-ai-agent` is the project identity used to prevent credit theft after
+open-sourcing. Please do not publish confusingly similar npm packages
+(`rawal`, `rawal-ai`, `rawal-agent`, typosquats) claiming to be this project.
+Report abuse via GitHub Issues and `npm abuse`.

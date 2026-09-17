@@ -1,0 +1,28 @@
+{
+  "name": "rawal-ai-agent",
+  "version": "2.0.0",
+  "description": "One-click installer for rawal-ai-agent — self-hosted autonomous AI workspace (backend + frontend + sandbox)",
+  "type": "module",
+  "bin": {
+    "rawal-ai-agent": "index.js",
+    "rawal": "index.js"
+  },
+  "files": ["index.js", "README.md", "LICENSE"],
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rawalsinghpsnl/rawal-ai-agent.git"
+  },
+  "homepage": "https://github.com/rawalsinghpsnl/rawal-ai-agent#readme",
+  "bugs": {
+    "url": "https://github.com/rawalsinghpsnl/rawal-ai-agent/issues"
+  },
+  "author": "rawal-ai-agent contributors",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": ["rawal-ai-agent", "rawal", "ai-agent", "autonomous-agent", "self-hosted", "fastapi", "react", "sandbox"],
+  "license": "MIT"
+}

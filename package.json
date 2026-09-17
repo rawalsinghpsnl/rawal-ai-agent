@@ -1,0 +1,42 @@
+{
+  "name": "rawal-ai-agent-monorepo",
+  "private": true,
+  "version": "2.0.0",
+  "description": "rawal-ai-agent — self-hosted autonomous AI workspace (FastAPI + React/Vite + sandbox). See docs/.",
+  "type": "module",
+  "packageManager": "npm@10.9.0",
+  "engines": {
+    "node": ">=20 <23",
+    "npm": ">=10"
+  },
+  "workspaces": [
+    "frontend",
+    "cli"
+  ],
+  "scripts": {
+    "install:all": "bash install.sh",
+    "install:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File install.ps1",
+    "dev": "make dev",
+    "dev:backend": "make backend",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "typecheck": "npm --prefix frontend run typecheck",
+    "lint": "npm --prefix frontend run lint",
+    "test": "make test",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down",
+    "cli:pack": "npm --prefix cli pack --dry-run",
+    "cli:publish": "npm publish ./cli --access public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rawalsinghpsnl/rawal-ai-agent.git"
+  },
+  "homepage": "https://github.com/rawalsinghpsnl/rawal-ai-agent#readme",
+  "bugs": {
+    "url": "https://github.com/rawalsinghpsnl/rawal-ai-agent/issues"
+  },
+  "author": "rawal-ai-agent contributors",
+  "license": "MIT",
+  "keywords": ["rawal-ai-agent", "ai-agent", "autonomous-agent", "self-hosted", "fastapi", "react"]
+}

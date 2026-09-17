@@ -1,0 +1,59 @@
+# rawal-ai-agent — local production stack (single origin: API + built frontend).
+# SPDX-License-Identifier: MIT
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-}
+    image: rawal-ai-agent:latest
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    environment:
+      ENV: prod
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env — see .env.example}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env — see .env.example}
+      AUTH_PASSWORD: ${AUTH_PASSWORD:-}
+      AUTH_USERNAME: ${AUTH_USERNAME:-rawal}
+      DEFAULT_LLM_BASE_URL: ${DEFAULT_LLM_BASE_URL:-https://api.openai.com/v1}
+      DEFAULT_LLM_API_KEY: ${DEFAULT_LLM_API_KEY:-}
+      DEFAULT_LLM_MODEL: ${DEFAULT_LLM_MODEL:-gpt-4o-mini}
+      # Sibling containers: the backend talks to the host daemon over this socket.
+      SANDBOX_BACKEND: ${SANDBOX_BACKEND:-docker}
+      SANDBOX_IMAGE: ${SANDBOX_IMAGE:-rawal-ai-agent-sandbox:latest}
+      DOCKER_HOST: unix:///var/run/docker.sock
+      DATA_DIR: /data
+      WORKSPACE_ROOT: /data/workspaces
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+    env_file:
+      - path: .env
+        required: false
+      - path: backend/.env
+        required: false
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Workspaces are bind-mounted into sandbox containers by the host daemon, so
+      # this path must be identical inside and outside this container.
+      # Works on Linux/macOS/Windows (Docker Desktop) — ${PWD} is intentionally
+      # avoided because Windows Compose does not expand it.
+      - ./data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    depends_on:
+      sandbox-image:
+        condition: service_completed_successfully
+
+  sandbox-image:
+    # One-shot build so `docker compose up` has the sandbox image ready.
+    build:
+      context: ./sandbox
+      dockerfile: Dockerfile
+    image: rawal-ai-agent-sandbox:latest
+    command: ["true"]
+    restart: "no"
