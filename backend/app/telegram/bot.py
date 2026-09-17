@@ -232,7 +232,7 @@ class TelegramBot:
             tid = self._active_thread_per_user.get(str(user_id), "None")
             status_msg = (
                 "📊 *Rawal AI System Status*\n\n"
-                f"• *App Version:* v2.0.0\n"
+                f"• *App Version:* v2.0.1\n"
                 f"• *Active Session ID:* `{tid}`\n"
                 f"• *MongoDB Persistence:* {mongo_st}\n"
                 f"• *Google Drive Storage:* {gdrive_st}\n"

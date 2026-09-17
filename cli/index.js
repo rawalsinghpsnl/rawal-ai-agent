@@ -172,7 +172,7 @@ function runDocker() {
 }
 
 if (has("--help") || has("-h")) {
-  console.log(`rawal-ai-agent installer v2.0.0
+  console.log(`rawal-ai-agent installer v2.0.1
 
 Usage:
   npx rawal-ai-agent [options]
@@ -197,7 +197,7 @@ environment (never on the command line).`);
 }
 
 if (has("--version") || has("-v")) {
-  console.log("rawal-ai-agent installer 2.0.0");
+  console.log("rawal-ai-agent installer 2.0.1");
   process.exit(0);
 }
 

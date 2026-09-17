@@ -1,6 +1,6 @@
 {
   "name": "rawal-ai-agent",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "One-click installer for rawal-ai-agent — self-hosted autonomous AI workspace (backend + frontend + sandbox)",
   "type": "module",
   "bin": {

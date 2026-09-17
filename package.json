@@ -1,7 +1,7 @@
 {
   "name": "rawal-ai-agent-monorepo",
   "private": true,
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "rawal-ai-agent — self-hosted autonomous AI workspace (FastAPI + React/Vite + sandbox). See docs/.",
   "type": "module",
   "packageManager": "npm@10.9.0",
