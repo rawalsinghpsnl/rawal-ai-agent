@@ -30,69 +30,34 @@ class SwarmDeployRequest(BaseModel):
     max_steps: int = 25
 
 
-# ── SubAgent endpoints ──────────────────────────────────────────────────────
+# NOTE: Route order matters in FastAPI — specific/static paths MUST come before
+# generic `/{thread_id}` and `/{thread_id}/{agent_id}` patterns, otherwise
+# e.g. GET `/agents/abc/swarms` matches `/{thread_id}/{agent_id}` with
+# agent_id="swarms", and GET `/agents/types/info` matches with
+# thread_id="types", agent_id="info".
 
-@router.get("/{thread_id}", summary="List subagents for a thread")
-async def list_agents(thread_id: str, status: str | None = None):
-    from app.agent.subagent_manager import list_subagents
-    agents = await list_subagents(thread_id, status=status)
-    return {"agents": agents}
+# ── Agent types info (static — must be first) ────────────────────────────────
 
-
-@router.get("/{thread_id}/{agent_id}", summary="Get subagent status")
-async def get_agent_status(thread_id: str, agent_id: str):
-    from app.agent.subagent_manager import get_subagent_status
-    status = await get_subagent_status(agent_id)
-    if not status:
-        raise HTTPException(404, f"SubAgent {agent_id} not found")
-    return status
-
-
-@router.post("/{thread_id}/spawn", summary="Spawn a new subagent")
-async def spawn_agent(thread_id: str, req: SpawnRequest):
-    from app.agent.subagent_manager import spawn_subagent, AGENT_TYPES
-    if req.agent_type not in AGENT_TYPES:
-        raise HTTPException(400, f"Unknown agent_type: {req.agent_type}")
-    agent = await spawn_subagent(thread_id=thread_id, agent_type=req.agent_type, name=req.name, prompt=req.prompt, priority=req.priority, max_steps=req.max_steps)
-    return {"id": agent.id, "status": agent.status, "name": agent.name}
-
-
-@router.post("/{thread_id}/{agent_id}/kill", summary="Kill a subagent")
-async def kill_agent(thread_id: str, agent_id: str, req: KillRequest | None = None):
-    from app.agent.subagent_manager import kill_subagent
-    force = req.force if req else False
-    success = await kill_subagent(agent_id, force=force)
-    if not success:
-        raise HTTPException(404, f"SubAgent {agent_id} not found or already stopped")
-    return {"status": "killed", "agent_id": agent_id}
+@router.get("/types/info", summary="List available agent types")
+async def list_agent_types():
+    from app.agent.subagent_manager import AGENT_TYPES, PRIORITY_LEVELS
+    return {
+        "agent_types": {
+            k: {
+                "system_prompt": v["system_prompt"][:200],
+                "priority_default": v["priority_default"],
+                "max_steps_default": v["max_steps_default"],
+                "icon": v["icon"],
+                "color": v["color"],
+            }
+            for k, v in AGENT_TYPES.items()
+        },
+        "priority_levels": PRIORITY_LEVELS,
+        "strategies": ["parallel", "sequential", "map_reduce", "hierarchical"],
+    }
 
 
-@router.post("/{thread_id}/{agent_id}/pause", summary="Pause a subagent")
-async def pause_agent(thread_id: str, agent_id: str):
-    from app.agent.subagent_manager import pause_subagent
-    success = await pause_subagent(agent_id)
-    if not success:
-        raise HTTPException(400, f"Cannot pause subagent {agent_id}")
-    return {"status": "paused", "agent_id": agent_id}
-
-
-@router.post("/{thread_id}/{agent_id}/resume", summary="Resume a paused subagent")
-async def resume_agent(thread_id: str, agent_id: str):
-    from app.agent.subagent_manager import resume_subagent
-    success = await resume_subagent(agent_id)
-    if not success:
-        raise HTTPException(400, f"Cannot resume subagent {agent_id}")
-    return {"status": "running", "agent_id": agent_id}
-
-
-@router.post("/{thread_id}/kill-all", summary="Kill all running subagents")
-async def kill_all_agents(thread_id: str):
-    from app.agent.subagent_manager import kill_all_subagents
-    count = await kill_all_subagents(thread_id)
-    return {"killed_count": count}
-
-
-# ── Swarm endpoints ──────────────────────────────────────────────────────────
+# ── Swarm endpoints (specific — before generic agent_id routes) ─────────────
 
 @router.get("/{thread_id}/swarms", summary="List swarms for a thread")
 async def list_swarms(thread_id: str):
@@ -124,22 +89,65 @@ async def kill_swarm(thread_id: str, swarm_id: str):
     return {"status": "killed", "swarm_id": swarm_id, "killed_count": count}
 
 
-# ── Agent types info ─────────────────────────────────────────────────────────
+# ── SubAgent spawn / kill-all (specific 2-segment POSTs) ─────────────────────
 
-@router.get("/types/info", summary="List available agent types")
-async def list_agent_types():
-    from app.agent.subagent_manager import AGENT_TYPES, PRIORITY_LEVELS
-    return {
-        "agent_types": {
-            k: {
-                "system_prompt": v["system_prompt"][:200],
-                "priority_default": v["priority_default"],
-                "max_steps_default": v["max_steps_default"],
-                "icon": v["icon"],
-                "color": v["color"],
-            }
-            for k, v in AGENT_TYPES.items()
-        },
-        "priority_levels": PRIORITY_LEVELS,
-        "strategies": ["parallel", "sequential", "map_reduce", "hierarchical"],
-    }
+@router.post("/{thread_id}/spawn", summary="Spawn a new subagent")
+async def spawn_agent(thread_id: str, req: SpawnRequest):
+    from app.agent.subagent_manager import spawn_subagent, AGENT_TYPES
+    if req.agent_type not in AGENT_TYPES:
+        raise HTTPException(400, f"Unknown agent_type: {req.agent_type}")
+    agent = await spawn_subagent(thread_id=thread_id, agent_type=req.agent_type, name=req.name, prompt=req.prompt, priority=req.priority, max_steps=req.max_steps)
+    return {"id": agent.id, "status": agent.status, "name": agent.name}
+
+
+@router.post("/{thread_id}/kill-all", summary="Kill all running subagents")
+async def kill_all_agents(thread_id: str):
+    from app.agent.subagent_manager import kill_all_subagents
+    count = await kill_all_subagents(thread_id)
+    return {"killed_count": count}
+
+
+# ── SubAgent generic endpoints (must be last) ────────────────────────────────
+
+@router.get("/{thread_id}", summary="List subagents for a thread")
+async def list_agents(thread_id: str, status: str | None = None):
+    from app.agent.subagent_manager import list_subagents
+    agents = await list_subagents(thread_id, status=status)
+    return {"agents": agents}
+
+
+@router.get("/{thread_id}/{agent_id}", summary="Get subagent status")
+async def get_agent_status(thread_id: str, agent_id: str):
+    from app.agent.subagent_manager import get_subagent_status
+    status = await get_subagent_status(agent_id)
+    if not status:
+        raise HTTPException(404, f"SubAgent {agent_id} not found")
+    return status
+
+
+@router.post("/{thread_id}/{agent_id}/kill", summary="Kill a subagent")
+async def kill_agent(thread_id: str, agent_id: str, req: KillRequest | None = None):
+    from app.agent.subagent_manager import kill_subagent
+    force = req.force if req else False
+    success = await kill_subagent(agent_id, force=force)
+    if not success:
+        raise HTTPException(404, f"SubAgent {agent_id} not found or already stopped")
+    return {"status": "killed", "agent_id": agent_id}
+
+
+@router.post("/{thread_id}/{agent_id}/pause", summary="Pause a subagent")
+async def pause_agent(thread_id: str, agent_id: str):
+    from app.agent.subagent_manager import pause_subagent
+    success = await pause_subagent(agent_id)
+    if not success:
+        raise HTTPException(400, f"Cannot pause subagent {agent_id}")
+    return {"status": "paused", "agent_id": agent_id}
+
+
+@router.post("/{thread_id}/{agent_id}/resume", summary="Resume a paused subagent")
+async def resume_agent(thread_id: str, agent_id: str):
+    from app.agent.subagent_manager import resume_subagent
+    success = await resume_subagent(agent_id)
+    if not success:
+        raise HTTPException(400, f"Cannot resume subagent {agent_id}")
+    return {"status": "running", "agent_id": agent_id}

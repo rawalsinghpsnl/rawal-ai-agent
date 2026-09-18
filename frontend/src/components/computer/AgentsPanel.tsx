@@ -5,7 +5,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useStore } from "@/lib/store";
 import { api } from "@/lib/api";
-import type { SubAgentInfo, SubAgentListItem, SwarmInfo, AgentType, AgentPriority, SwarmStrategy } from "@/types";
+import type { SubAgentInfo, SwarmInfo, AgentType, AgentPriority, SwarmStrategy } from "@/types";
 
 const AGENT_TYPE_CONFIG: Record<string, { icon: string; color: string; label: string }> = {
   explorer: { icon: "🔍", color: "bg-blue-500", label: "Explorer" },
