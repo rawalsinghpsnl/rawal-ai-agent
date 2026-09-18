@@ -143,6 +143,33 @@ def _extract_markdown_tool_calls(text: str, tools: list[dict[str, Any]] | None) 
                     )
                 )
 
+    # Pattern 3: Hermes-style XML tags emitted by some models/proxies instead
+    # of native tool_calls, e.g. <tool_call>{"name": "write_file",
+    # "arguments": {"path": "index.html", ...}}</tool_call>
+    if not extracted:
+        for match in re.finditer(r"<tool_call\s*[^>]*>([\s\S]*?)</tool_call\s*>", text):
+            try:
+                parsed = json.loads(match.group(1).strip())
+            except Exception:
+                continue
+            items = parsed if isinstance(parsed, list) else [parsed]
+            for item in items:
+                if isinstance(item, dict) and item.get("name") in valid_names:
+                    args = item.get("arguments") or item.get("parameters") or {}
+                    if isinstance(args, str):
+                        try:
+                            args = json.loads(args)
+                        except Exception:
+                            args = {"value": args}
+                    extracted.append(
+                        ToolCall(
+                            id=f"call_xml_{len(extracted)}",
+                            name=item["name"],
+                            arguments=args if isinstance(args, dict) else {"value": args},
+                            raw_arguments=json.dumps(args),
+                        )
+                    )
+
     return extracted
 
 
