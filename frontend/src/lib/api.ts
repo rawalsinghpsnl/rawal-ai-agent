@@ -459,6 +459,67 @@ export const api = {
     get<{ id: number; actor: string; action: string; detail: Record<string, unknown>; created_at: string }[]>(
       `/audit?limit=${limit}`,
     ),
+
+  // ---- subagents & swarms ----
+  listSubAgents: async (threadId: string, status?: string): Promise<SubAgentListItem[]> => {
+    const params = status ? `?status=${encodeURIComponent(status)}` : "";
+    const data = await get<{ agents: SubAgentListItem[] }>(`/agents/${encodeURIComponent(threadId)}${params}`);
+    return data.agents;
+  },
+  getSubAgentStatus: (threadId: string, agentId: string) =>
+    get<SubAgentInfo>(`/agents/${encodeURIComponent(threadId)}/${encodeURIComponent(agentId)}`),
+  spawnSubAgent: (
+    threadId: string,
+    data: { agent_type: string; name: string; prompt: string; priority?: string; max_steps?: number },
+  ) => post<{ id: string; status: string; name: string }>(`/agents/${encodeURIComponent(threadId)}/spawn`, data),
+  killSubAgent: (threadId: string, agentId: string, force = false) =>
+    post<{ status: string; agent_id: string }>(
+      `/agents/${encodeURIComponent(threadId)}/${encodeURIComponent(agentId)}/kill`,
+      { force },
+    ),
+  pauseSubAgent: (threadId: string, agentId: string) =>
+    post<{ status: string; agent_id: string }>(
+      `/agents/${encodeURIComponent(threadId)}/${encodeURIComponent(agentId)}/pause`,
+      {},
+    ),
+  resumeSubAgent: (threadId: string, agentId: string) =>
+    post<{ status: string; agent_id: string }>(
+      `/agents/${encodeURIComponent(threadId)}/${encodeURIComponent(agentId)}/resume`,
+      {},
+    ),
+  killAllSubAgents: (threadId: string) =>
+    post<{ killed_count: number }>(`/agents/${encodeURIComponent(threadId)}/kill-all`, {}),
+  listSwarms: async (threadId: string): Promise<SwarmListItem[]> => {
+    const data = await get<{ swarms: SwarmListItem[] }>(`/agents/${encodeURIComponent(threadId)}/swarms`);
+    return data.swarms;
+  },
+  getSwarmStatus: (threadId: string, swarmId: string) =>
+    get<SwarmInfo>(`/agents/${encodeURIComponent(threadId)}/swarms/${encodeURIComponent(swarmId)}`),
+  deploySwarm: (
+    threadId: string,
+    data: {
+      name: string;
+      prompt: string;
+      strategy?: string;
+      agent_count?: number;
+      agent_type?: string;
+      priority?: string;
+      max_steps?: number;
+    },
+  ) =>
+    post<{ id: string; status: string; name: string }>(
+      `/agents/${encodeURIComponent(threadId)}/swarms/deploy`,
+      data,
+    ),
+  killSwarm: (threadId: string, swarmId: string) =>
+    post<{ status: string; swarm_id: string; killed_count: number }>(
+      `/agents/${encodeURIComponent(threadId)}/swarms/${encodeURIComponent(swarmId)}/kill`,
+      {},
+    ),
+  getAgentTypes: async (): Promise<Record<string, AgentTypeInfo>> => {
+    const data = await get<{ agent_types: Record<string, AgentTypeInfo> }>("/agents/types/info");
+    return data.agent_types;
+  },
 };
 
 export function streamUrl(threadId: string, after = 0): string {
@@ -537,59 +598,56 @@ export async function previewUrlWithTicket(
 }
 
 // ── SubAgent & Swarm API ────────────────────────────────────────────────────
+// Standalone re-exports kept for backwards compatibility; prefer `api.*`.
 
 export async function listSubAgents(threadId: string, status?: string): Promise<SubAgentListItem[]> {
-  const params = status ? `?status=${encodeURIComponent(status)}` : "";
-  const data = await get<{ agents: SubAgentListItem[] }>(`/agents/${encodeURIComponent(threadId)}${params}`);
-  return data.agents;
+  return api.listSubAgents(threadId, status);
 }
 
 export async function getSubAgentStatus(threadId: string, agentId: string): Promise<SubAgentInfo> {
-  return get<SubAgentInfo>(`/agents/${encodeURIComponent(threadId)}/${encodeURIComponent(agentId)}`);
+  return api.getSubAgentStatus(threadId, agentId);
 }
 
 export async function spawnSubAgent(threadId: string, data: {
   agent_type: string; name: string; prompt: string; priority?: string; max_steps?: number;
 }): Promise<{ id: string; status: string; name: string }> {
-  return post(`/agents/${encodeURIComponent(threadId)}/spawn`, data);
+  return api.spawnSubAgent(threadId, data);
 }
 
 export async function killSubAgent(threadId: string, agentId: string, force = false): Promise<{ status: string; agent_id: string }> {
-  return post(`/agents/${encodeURIComponent(threadId)}/${encodeURIComponent(agentId)}/kill`, { force });
+  return api.killSubAgent(threadId, agentId, force);
 }
 
 export async function pauseSubAgent(threadId: string, agentId: string): Promise<{ status: string; agent_id: string }> {
-  return post(`/agents/${encodeURIComponent(threadId)}/${encodeURIComponent(agentId)}/pause`, {});
+  return api.pauseSubAgent(threadId, agentId);
 }
 
 export async function resumeSubAgent(threadId: string, agentId: string): Promise<{ status: string; agent_id: string }> {
-  return post(`/agents/${encodeURIComponent(threadId)}/${encodeURIComponent(agentId)}/resume`, {});
+  return api.resumeSubAgent(threadId, agentId);
 }
 
 export async function killAllSubAgents(threadId: string): Promise<{ killed_count: number }> {
-  return post(`/agents/${encodeURIComponent(threadId)}/kill-all`, {});
+  return api.killAllSubAgents(threadId);
 }
 
 export async function listSwarms(threadId: string): Promise<SwarmListItem[]> {
-  const data = await get<{ swarms: SwarmListItem[] }>(`/agents/${encodeURIComponent(threadId)}/swarms`);
-  return data.swarms;
+  return api.listSwarms(threadId);
 }
 
 export async function getSwarmStatus(threadId: string, swarmId: string): Promise<SwarmInfo> {
-  return get<SwarmInfo>(`/agents/${encodeURIComponent(threadId)}/swarms/${encodeURIComponent(swarmId)}`);
+  return api.getSwarmStatus(threadId, swarmId);
 }
 
 export async function deploySwarm(threadId: string, data: {
   name: string; prompt: string; strategy?: string; agent_count?: number; agent_type?: string; priority?: string; max_steps?: number;
 }): Promise<{ id: string; status: string; name: string }> {
-  return post(`/agents/${encodeURIComponent(threadId)}/swarms/deploy`, data);
+  return api.deploySwarm(threadId, data);
 }
 
 export async function killSwarm(threadId: string, swarmId: string): Promise<{ status: string; swarm_id: string; killed_count: number }> {
-  return post(`/agents/${encodeURIComponent(threadId)}/swarms/${encodeURIComponent(swarmId)}/kill`, {});
+  return api.killSwarm(threadId, swarmId);
 }
 
 export async function getAgentTypes(): Promise<Record<string, AgentTypeInfo>> {
-  const data = await get<{ agent_types: Record<string, AgentTypeInfo> }>("/agents/types/info");
-  return data.agent_types;
+  return api.getAgentTypes();
 }
