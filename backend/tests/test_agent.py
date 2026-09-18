@@ -8,7 +8,12 @@ import pytest
 
 from app.agent.context import _split_point, estimate_tokens, needs_compaction
 from app.agent.permissions import PermissionBroker
-from app.llm.client import _salvage_json, _to_anthropic_messages, _ToolCallAccumulator
+from app.llm.client import (
+    _extract_markdown_tool_calls,
+    _salvage_json,
+    _to_anthropic_messages,
+    _ToolCallAccumulator,
+)
 from app.tools.base import Tool
 
 # ---------------------------------------------------------------- streaming --
@@ -35,6 +40,36 @@ def test_accumulator_keeps_parallel_calls_separate():
 def test_salvage_recovers_truncated_arguments():
     assert _salvage_json('{"path": "a.py"') == {"path": "a.py"}
     assert _salvage_json("not json at all") == {}
+
+
+def _write_file_tools():
+    return [{"type": "function", "function": {"name": "write_file", "description": "x", "parameters": {}}}]
+
+
+def test_extract_xml_tool_call_hermes_style():
+    # Models behind some proxies emit Hermes-style XML instead of native
+    # tool_calls; the agent must execute these, not render them as chat text.
+    text = (
+        'Here is the snake game:\n<tool_call>{"name": "write_file", "arguments": '
+        '{"content": "<!DOCTYPE html>\\n<html>\\"quoted\\" & <tags>", "path": "index.html"}}</tool_call>\nDone!'
+    )
+    calls = _extract_markdown_tool_calls(text, _write_file_tools())
+    assert len(calls) == 1
+    assert calls[0].name == "write_file"
+    assert calls[0].arguments["path"] == "index.html"
+    assert calls[0].arguments["content"].startswith("<!DOCTYPE html>")
+
+
+def test_extract_xml_tool_call_rejects_unknown_tools():
+    text = '<tool_call>{"name": "rm_rf", "arguments": {}}</tool_call>'
+    assert _extract_markdown_tool_calls(text, _write_file_tools()) == []
+
+
+def test_extract_xml_tool_call_list_form():
+    text = '<tool_call>[{"name": "write_file", "arguments": {"path": "a.html"}}]</tool_call>'
+    calls = _extract_markdown_tool_calls(text, _write_file_tools())
+    assert len(calls) == 1
+    assert calls[0].arguments == {"path": "a.html"}
 
 
 def test_anthropic_conversion_pairs_tool_use_with_results():
