@@ -16,8 +16,8 @@ from app.tools.registry import registry
     "start_server",
     (
         "Start a long-running dev/preview server inside the sandbox in the background and "
-        "show it in the user's Browser tab. Use for `npm run dev`, `python -m http.server`, "
-        "`uvicorn`, etc. Always bind to 0.0.0.0."
+        "show it in the user's Browser tab. Use for npm run dev, uvicorn, a Python HTTP "
+        "server, etc. Always bind to 0.0.0.0."
     ),
     obj(
         {

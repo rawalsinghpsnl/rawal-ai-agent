@@ -350,7 +350,11 @@ class LLMClient:
                             body = (await response.aread()).decode(errors="replace")
                             if "<html" in body.lower():
                                 raise LLMError(
-                                    f"Proxy returned {response.status_code} (Cloudflare/Render instance starting or invalid endpoint). Check Base URL.",
+                                    f"Proxy firewall blocked the request ({response.status_code}). "
+                                    "This is usually Cloudflare/WAF in front of the provider — "
+                                    "agent mode sends tool definitions that firewalls sometimes "
+                                    "mistake for attacks (chat mode has no tools, so it still works). "
+                                    "Check the provider's firewall/WAF settings or Base URL.",
                                     status=response.status_code,
                                     body=body[:300],
                                 )
@@ -488,7 +492,11 @@ class LLMClient:
                     body = (await response.aread()).decode(errors="replace")
                     if "<html" in body.lower():
                         raise LLMError(
-                            f"Proxy blocked request with status {response.status_code}. Check Base URL.",
+                            f"Proxy firewall blocked the request ({response.status_code}). "
+                            "This is usually Cloudflare/WAF in front of the provider — "
+                            "agent mode sends tool definitions that firewalls sometimes "
+                            "mistake for attacks (chat mode has no tools, so it still works). "
+                            "Check the provider's firewall/WAF settings or Base URL.",
                             status=response.status_code,
                             body=body[:300],
                         )
